@@ -10,220 +10,225 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
 
 body{
     background: linear-gradient(135deg,#667eea,#764ba2);
-    padding:20px;
-    color:#333;
+    padding:10px;
 }
 
+/* Container */
 .container{
-    max-width:1100px;
+    max-width:1000px;
     margin:auto;
     background:#fff;
-    padding:20px;
+    padding:15px;
     border-radius:15px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
+/* Header */
 h1{
     text-align:center;
-    margin-bottom:20px;
-    color:#444;
+    margin-bottom:15px;
+    font-size:20px;
 }
 
+/* Controls */
 .controls{
     display:flex;
     flex-wrap:wrap;
-    gap:10px;
+    gap:8px;
     justify-content:center;
-    margin-bottom:20px;
+    margin-bottom:15px;
 }
 
-input, button, select{
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    outline:none;
-}
-
+/* Buttons */
 button{
-    background:#6c63ff;
-    color:white;
+    padding:10px;
     border:none;
+    border-radius:8px;
+    color:#fff;
     cursor:pointer;
-    transition:0.3s;
+    font-size:13px;
 }
 
-button:hover{
-    background:#574fd6;
+.upload-btn{background:#6c63ff;}
+.export-btn{background:#17a2b8;}
+.auto-btn{background:#ff9800;}
+.stop-btn{background:#dc3545;}
+.call-btn{background:#28a745;}
+.disconnect-btn{background:#444;}
+
+/* Inputs */
+input,select{
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:13px;
 }
 
-.call-btn{
-    background:#28a745;
-}
-
-.call-btn:hover{
-    background:#1e7e34;
-}
-
-.auto-btn{
-    background:#ff9800;
-}
-
-.stop-btn{
-    background:#dc3545;
+/* Table */
+.table-wrapper{
+    overflow-x:auto;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:15px;
-    overflow:hidden;
-    border-radius:10px;
 }
 
 th{
     background:#6c63ff;
     color:white;
-    padding:12px;
+    padding:10px;
+    font-size:13px;
 }
 
 td{
-    padding:10px;
+    padding:8px;
     text-align:center;
+    font-size:12px;
     border-bottom:1px solid #eee;
-}
-
-tr:hover{
-    background:#f3f3f3;
 }
 
 .status-input{
     width:100%;
-    padding:6px;
-    border-radius:5px;
-    border:1px solid #ccc;
 }
 
+/* Mobile Optimization */
+@media(max-width:600px){
+    h1{font-size:18px;}
+    button{flex:1;}
+    input{flex:1;}
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h1>📞 Smart Excel Call Manager</h1>
 
-    <div class="controls">
-        <input type="file" id="fileInput" accept=".xlsx,.xls">
+<h1>📞 Smart Call Manager</h1>
 
-        <input type="text" id="name" placeholder="Name">
-        <input type="text" id="phone" placeholder="Phone">
-        <input type="text" id="info" placeholder="Info">
+<div class="controls">
 
-        <button onclick="addManual()">Add</button>
+    <!-- Upload Button -->
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📤 Upload</button>
+    <input type="file" id="fileInput" style="display:none">
 
-        <select id="delay">
-            <option value="5000">5 sec delay</option>
-            <option value="10000">10 sec delay</option>
-            <option value="15000">15 sec delay</option>
-        </select>
+    <button class="export-btn" onclick="exportExcel()">📥 Export</button>
 
-        <button class="auto-btn" onclick="startAutoCall()">▶ Auto Call</button>
-        <button class="stop-btn" onclick="stopAutoCall()">⏹ Stop</button>
-    </div>
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="phone" placeholder="Phone">
+    <input type="text" id="info" placeholder="Info">
 
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Info</th>
-                <th>Status</th>
-                <th>Call</th>
-            </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-    </table>
+    <button onclick="addManual()">Add</button>
+
+    <select id="delay">
+        <option value="5000">5s</option>
+        <option value="10000">10s</option>
+        <option value="15000">15s</option>
+    </select>
+
+    <button class="auto-btn" onclick="startAutoCall()">▶ Auto</button>
+    <button class="stop-btn" onclick="stopAutoCall()">⏹ Stop</button>
+    <button class="disconnect-btn" onclick="disconnectCall()">📴 Disconnect</button>
+
+</div>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Info</th>
+<th>Status</th>
+<th>Call</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
 </div>
 
 <script>
 
-let data = [];
+let data = JSON.parse(localStorage.getItem('callData')) || [];
 let autoIndex = 0;
 let autoRunning = false;
 let autoTimer = null;
 
+// Save
+function saveData(){
+    localStorage.setItem('callData', JSON.stringify(data));
+}
+
+// Render
+function render(){
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+
+    data.forEach((row,i)=>{
+        tbody.innerHTML += `
+        <tr>
+            <td>${row.Name}</td>
+            <td>${row.Phone}</td>
+            <td>${row.Info}</td>
+            <td>
+                <input class="status-input"
+                value="${row.Status || ''}"
+                onchange="updateStatus(${i},this.value)">
+            </td>
+            <td>
+                <button class="call-btn" onclick="callNumber('${row.Phone}')">Call</button>
+            </td>
+        </tr>`;
+    });
+
+    saveData();
+}
+
 // Upload Excel
 document.getElementById('fileInput').addEventListener('change', function(e){
-    const file = e.target.files[0];
     const reader = new FileReader();
 
     reader.onload = function(e){
-        const workbook = XLSX.read(e.target.result, {type:'binary'});
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
 
-        data = jsonData.map(row => ({
-            Name: row.Name || '',
-            Phone: row.Phone || '',
-            Info: row.Info || '',
-            Status: ''
+        data = json.map(r => ({
+            Name:r.Name || '',
+            Phone:r.Phone || '',
+            Info:r.Info || '',
+            Status:''
         }));
 
         render();
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsBinaryString(e.target.files[0]);
 });
 
-// Render Table
-function render(){
-    const tbody = document.getElementById('tbody');
-    tbody.innerHTML = '';
-
-    data.forEach((row,index)=>{
-        let tr = document.createElement('tr');
-
-        tr.innerHTML = `
-            <td>${row.Name}</td>
-            <td>${row.Phone}</td>
-            <td>${row.Info}</td>
-            <td>
-                <input class="status-input" 
-                value="${row.Status || ''}" 
-                onchange="updateStatus(${index}, this.value)">
-            </td>
-            <td>
-                <button class="call-btn" onclick="callNumber('${row.Phone}')">Call</button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-    });
-}
-
-// Manual Add
+// Add
 function addManual(){
-    let name = document.getElementById('name').value;
+    let name = name.value;
     let phone = document.getElementById('phone').value;
     let info = document.getElementById('info').value;
 
-    if(!phone){ alert("Enter phone number"); return; }
+    if(!phone){alert("Enter phone");return;}
 
-    data.push({Name:name, Phone:phone, Info:info, Status:''});
+    data.push({Name:name,Phone:phone,Info:info,Status:''});
     render();
 }
 
 // Update Status
-function updateStatus(index, value){
-    data[index].Status = value;
+function updateStatus(i,val){
+    data[i].Status = val;
+    saveData();
 }
 
 // Call
@@ -231,37 +236,49 @@ function callNumber(phone){
     window.location.href = `tel:${phone}`;
 }
 
-// AUTO CALL SYSTEM
-function startAutoCall(){
-    if(data.length === 0){
-        alert("No data available");
-        return;
-    }
-
-    autoRunning = true;
-    autoIndex = 0;
-    runAutoCall();
+// Disconnect (UI based)
+function disconnectCall(){
+    alert("📴 Please manually end call from phone screen");
 }
 
-function runAutoCall(){
-    if(!autoRunning || autoIndex >= data.length) return;
+// Auto Call
+function startAutoCall(){
+    if(data.length===0){alert("No data");return;}
 
-    let delay = document.getElementById('delay').value;
-    let phone = data[autoIndex].Phone;
+    autoRunning=true;
+    autoIndex=0;
+    runAuto();
+}
+
+function runAuto(){
+    if(!autoRunning || autoIndex>=data.length) return;
+
+    let delay=document.getElementById('delay').value;
+    let phone=data[autoIndex].Phone;
 
     if(phone){
-        window.location.href = `tel:${phone}`;
+        window.location.href=`tel:${phone}`;
     }
 
     autoIndex++;
-
-    autoTimer = setTimeout(runAutoCall, delay);
+    autoTimer=setTimeout(runAuto,delay);
 }
 
 function stopAutoCall(){
-    autoRunning = false;
+    autoRunning=false;
     clearTimeout(autoTimer);
 }
+
+// Export
+function exportExcel(){
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Calls");
+    XLSX.writeFile(wb, "Call_Data.xlsx");
+}
+
+// Init
+render();
 
 </script>
 
