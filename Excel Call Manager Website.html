@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Call Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+body{font-family:Arial;background:#f5f5f5;padding:20px}
+h1{text-align:center}
+.container{max-width:900px;margin:auto}
+input,button{padding:10px;margin:5px}
+table{width:100%;border-collapse:collapse;margin-top:20px;background:#fff}
+th,td{padding:10px;border:1px solid #ddd;text-align:center}
+button{cursor:pointer;background:#28a745;color:white;border:none;border-radius:5px}
+button:hover{background:#218838}
+.call-btn{background:#007bff}
+.call-btn:hover{background:#0056b3}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📞 Excel Call Manager</h1>
+
+<input type="file" id="fileInput" accept=".xlsx,.xls" />
+
+<h3>Manual Entry</h3>
+<input type="text" id="name" placeholder="Name">
+<input type="text" id="phone" placeholder="Phone Number">
+<input type="text" id="info" placeholder="Info">
+<button onclick="addManual()">Add</button>
+
+<table id="table">
+<thead>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Info</th>
+<th>Call</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<script>
+let data = [];
+
+// File Upload
+ document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const workbook = XLSX.read(e.target.result, {type: 'binary'});
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        data = jsonData;
+        renderTable();
+    };
+
+    reader.readAsBinaryString(file);
+});
+
+// Render Table
+function renderTable(){
+    const tbody = document.querySelector('#table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach((row, index)=>{
+        let tr = document.createElement('tr');
+
+        let name = row.Name || row.name || '';
+        let phone = row.Phone || row.phone || '';
+        let info = row.Info || row.info || '';
+
+        tr.innerHTML = `
+            <td>${name}</td>
+            <td>${phone}</td>
+            <td>${info}</td>
+            <td><button class="call-btn" onclick="makeCall('${phone}', ${index})">Call</button></td>
+            <td id="time-${index}">0 sec</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Manual Add
+function addManual(){
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
+    const info = document.getElementById('info').value;
+
+    if(!phone){ alert('Enter phone number'); return; }
+
+    data.push({Name:name, Phone:phone, Info:info});
+    renderTable();
+}
+
+// Call + Timer
+function makeCall(phone, index){
+    window.location.href = `tel:${phone}`;
+
+    let start = Date.now();
+    let timer = setInterval(()=>{
+        let diff = Math.floor((Date.now() - start)/1000);
+        document.getElementById(`time-${index}`).innerText = diff + ' sec';
+    },1000);
+
+    // Stop after 30 min auto
+    setTimeout(()=> clearInterval(timer), 1800000);
+}
+</script>
+</body>
+</html>
