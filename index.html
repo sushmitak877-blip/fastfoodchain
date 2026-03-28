@@ -14,24 +14,56 @@
 
 body{
     background: linear-gradient(135deg,#667eea,#764ba2);
-    padding:10px;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
-/* Container */
-.container{
-    max-width:1000px;
-    margin:auto;
-    background:#fff;
-    padding:15px;
+/* Glass Card */
+.card{
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    padding:20px;
     border-radius:15px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    width:95%;
+    max-width:1000px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Login */
+#loginBox{
+    text-align:center;
+}
+
+#loginBox input{
+    width:100%;
+    margin:8px 0;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+#loginBox button{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#6c63ff;
+    color:white;
+    cursor:pointer;
+}
+
+/* Main App */
+#app{
+    display:none;
 }
 
 /* Header */
 h1{
     text-align:center;
     margin-bottom:15px;
-    font-size:20px;
+    color:white;
 }
 
 /* Controls */
@@ -51,6 +83,11 @@ button{
     color:#fff;
     cursor:pointer;
     font-size:13px;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:scale(1.05);
 }
 
 .upload-btn{background:#6c63ff;}
@@ -64,7 +101,7 @@ button{
 input,select{
     padding:8px;
     border-radius:6px;
-    border:1px solid #ccc;
+    border:none;
     font-size:13px;
 }
 
@@ -76,64 +113,77 @@ input,select{
 table{
     width:100%;
     border-collapse:collapse;
+    background:white;
+    border-radius:10px;
+    overflow:hidden;
 }
 
 th{
     background:#6c63ff;
     color:white;
     padding:10px;
-    font-size:13px;
 }
 
 td{
     padding:8px;
     text-align:center;
-    font-size:12px;
     border-bottom:1px solid #eee;
+}
+
+tr:hover{
+    background:#f3f3f3;
 }
 
 .status-input{
     width:100%;
 }
 
-/* Mobile Optimization */
+/* Mobile */
 @media(max-width:600px){
-    h1{font-size:18px;}
-    button{flex:1;}
-    input{flex:1;}
+    button,input{flex:1;}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="card">
+
+<!-- LOGIN -->
+<div id="loginBox">
+    <h2 style="color:white;">🔐 Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app">
 
 <h1>📞 Smart Call Manager</h1>
 
 <div class="controls">
 
-    <!-- Upload Button -->
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📤 Upload</button>
-    <input type="file" id="fileInput" style="display:none">
+<button class="upload-btn" onclick="document.getElementById('fileInput').click()">📤 Upload</button>
+<input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
 
-    <button class="export-btn" onclick="exportExcel()">📥 Export</button>
+<button class="export-btn" onclick="exportExcel()">📥 Export</button>
 
-    <input type="text" id="name" placeholder="Name">
-    <input type="text" id="phone" placeholder="Phone">
-    <input type="text" id="info" placeholder="Info">
+<input type="text" id="name" placeholder="Name">
+<input type="text" id="phone" placeholder="Phone">
+<input type="text" id="info" placeholder="Info">
 
-    <button onclick="addManual()">Add</button>
+<button onclick="addManual()">Add</button>
 
-    <select id="delay">
-        <option value="5000">5s</option>
-        <option value="10000">10s</option>
-        <option value="15000">15s</option>
-    </select>
+<select id="delay">
+<option value="5000">5s</option>
+<option value="10000">10s</option>
+<option value="15000">15s</option>
+</select>
 
-    <button class="auto-btn" onclick="startAutoCall()">▶ Auto</button>
-    <button class="stop-btn" onclick="stopAutoCall()">⏹ Stop</button>
-    <button class="disconnect-btn" onclick="disconnectCall()">📴 Disconnect</button>
+<button class="auto-btn" onclick="startAutoCall()">▶ Auto</button>
+<button class="stop-btn" onclick="stopAutoCall()">⏹ Stop</button>
+<button class="disconnect-btn" onclick="disconnectCall()">📴 Disconnect</button>
 
 </div>
 
@@ -153,20 +203,34 @@ td{
 </div>
 
 </div>
+</div>
 
 <script>
+
+// LOGIN (simple)
+function login(){
+    let user = document.getElementById('username').value;
+    let pass = document.getElementById('password').value;
+
+    if(user==="admin" && pass==="1234"){
+        document.getElementById('loginBox').style.display='none';
+        document.getElementById('app').style.display='block';
+    }else{
+        alert("Wrong login");
+    }
+}
+
+// ===== YOUR SAME LOGIC BELOW =====
 
 let data = JSON.parse(localStorage.getItem('callData')) || [];
 let autoIndex = 0;
 let autoRunning = false;
 let autoTimer = null;
 
-// Save
 function saveData(){
     localStorage.setItem('callData', JSON.stringify(data));
 }
 
-// Render
 function render(){
     const tbody = document.getElementById('tbody');
     tbody.innerHTML = '';
@@ -191,7 +255,6 @@ function render(){
     saveData();
 }
 
-// Upload Excel
 document.getElementById('fileInput').addEventListener('change', function(e){
     const reader = new FileReader();
 
@@ -213,38 +276,40 @@ document.getElementById('fileInput').addEventListener('change', function(e){
     reader.readAsBinaryString(e.target.files[0]);
 });
 
-// Add
 function addManual(){
-    let name = name.value;
-    let phone = document.getElementById('phone').value;
-    let info = document.getElementById('info').value;
+    let nameValue = document.getElementById('name').value;
+    let phoneValue = document.getElementById('phone').value;
+    let infoValue = document.getElementById('info').value;
 
-    if(!phone){alert("Enter phone");return;}
+    if(!phoneValue){
+        alert("Enter phone number");
+        return;
+    }
 
-    data.push({Name:name,Phone:phone,Info:info,Status:''});
+    data.push({Name:nameValue,Phone:phoneValue,Info:infoValue,Status:''});
+
+    document.getElementById('name').value='';
+    document.getElementById('phone').value='';
+    document.getElementById('info').value='';
+
     render();
 }
 
-// Update Status
 function updateStatus(i,val){
     data[i].Status = val;
     saveData();
 }
 
-// Call
 function callNumber(phone){
     window.location.href = `tel:${phone}`;
 }
 
-// Disconnect (UI based)
 function disconnectCall(){
-    alert("📴 Please manually end call from phone screen");
+    alert("📴 Please manually end call from phone");
 }
 
-// Auto Call
 function startAutoCall(){
     if(data.length===0){alert("No data");return;}
-
     autoRunning=true;
     autoIndex=0;
     runAuto();
@@ -269,7 +334,6 @@ function stopAutoCall(){
     clearTimeout(autoTimer);
 }
 
-// Export
 function exportExcel(){
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -277,7 +341,6 @@ function exportExcel(){
     XLSX.writeFile(wb, "Call_Data.xlsx");
 }
 
-// Init
 render();
 
 </script>
